@@ -6,6 +6,21 @@
 
 #include <TFT_eSPI.h>
 
+#include "NotoSansBold15.h"
+#include "NotoSansBold36.h"
+#include "NotoSansMonoSCB20.h"
+#include "Final_Frontier_28.h"
+#include "Latin_Hiragana_24.h"
+#include "Unicode_Test_72.h"
+
+uint16_t bg = TFT_BLACK;
+uint16_t fg = TFT_WHITE;
+
+// The font names are arrays references, thus must NOT be in quotes ""
+#define AA_FONT_SMALL NotoSansBold15
+#define AA_FONT_LARGE NotoSansBold36
+#define AA_FONT_MONO  NotoSansMonoSCB20 // NotoSansMono-SemiCondensedBold 20pt
+
 // Stock font and GFXFF reference handle
 #define GFXFF 1
 #define FF18 &FreeSans12pt7b
@@ -23,18 +38,29 @@ unsigned long drawTime = 0;
 
 void header(const char *string, uint16_t color);
 void drawDatumMarker(int x, int y);
+void button(int x, int y, int num );
 
 void loop_all_free_fonts_demo(); 
 void loop_free_font_demo();
 void loop_custom_fonts();
 void loop_fast_fonts();
+void loop_smooth_font_demo_1();
+void loop_smooth_font_demo_2();
+void loop_smooth_font_demo_3();
+void loop_smooth_font_demo_4();
+void unicode_font_test();
 
+  
 TFT_eSPI& tft=M5.Lcd;
+TFT_eSprite spr = TFT_eSprite(&tft); // Sprite class needs to be invoked
 
 void setup()
 {
   tft.begin();
   tft.setRotation(1);
+  spr.setColorDepth(16); // 16 bit colour needed to show anti-aliased fonts
+  fg = TFT_WHITE;
+  bg = TFT_BLACK;
 }
 
 void loop()
@@ -42,10 +68,588 @@ void loop()
 //  loop_all_free_fonts_demo(); 
 //  loop_free_font_demo();
 //  loop_custom_fonts();
-    loop_fast_fonts();
+//    loop_fast_fonts();
+  loop_smooth_font_demo_1();
+  loop_smooth_font_demo_2();
+  loop_smooth_font_demo_3();
+  loop_smooth_font_demo_4();
+
+  tft.setRotation(0);
+  unicode_font_test();
+  tft.setRotation(1);
 }
 //  -D TFT_WIDTH=135
 //  -D TFT_HEIGHT=240
+
+
+void loop_smooth_font_demo_1() {
+
+  tft.fillScreen(TFT_BLACK);
+
+  tft.setTextColor(TFT_WHITE, TFT_BLACK); // Set the font colour AND the background colour
+                                          // so the anti-aliasing works
+
+  tft.setCursor(0, 0); // Set cursor at top left of screen
+
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Small font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  Serial.println("Loading font");
+
+  tft.loadFont(AA_FONT_SMALL);    // Must load the font first
+
+  tft.println("Small 15pt font (demo_1)"); // println moves cursor down for a new line
+
+  tft.println(); // New line
+
+  tft.print("ABC"); // print leaves cursor at end of line
+
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.println("1234"); // Added to line after ABC
+
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  // print stream formatting can be used,see:
+  // https://www.arduino.cc/en/Serial/Print
+  int ivalue = 1234;
+  tft.println(ivalue);       // print as an ASCII-encoded decimal
+  tft.println(ivalue, DEC);  // print as an ASCII-encoded decimal
+  tft.println(ivalue, HEX);  // print as an ASCII-encoded hexadecimal
+  tft.println(ivalue, OCT);  // print as an ASCII-encoded octal
+  tft.println(ivalue, BIN);  // print as an ASCII-encoded binary
+
+  tft.println(); // New line
+  tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+  float fvalue = 1.23456;
+  tft.println(fvalue, 0);  // no decimal places
+  tft.println(fvalue, 1);  // 1 decimal place
+  tft.println(fvalue, 2);  // 2 decimal places
+  tft.println(fvalue, 5);  // 5 decimal places
+
+  delay(2000);
+
+  // Get ready for the next demo while we have this font loaded
+  tft.fillScreen(TFT_BLACK);
+  tft.setCursor(0, 0); // Set cursor at top left of screen
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.println("Wrong and right ways to");
+  tft.println("print changing values...");
+
+  tft.unloadFont(); // Remove the font to recover memory used
+
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Large font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  tft.loadFont(AA_FONT_LARGE); // Load another different font
+
+  //tft.fillScreen(TFT_BLACK);
+  
+  // Draw changing numbers - does not work unless a filled rectangle is drawn over the old text
+  for (int i = 0; i <= 99; i++)
+  {
+    tft.setCursor(50, 50);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK); // TFT_BLACK is used for anti-aliasing only
+                                            // By default background fill is off
+    tft.print("      "); // Overprinting old number with spaces DOES NOT WORK!
+    tft.setCursor(50, 50);
+    tft.print(i / 10.0, 1);
+
+    // Adding a parameter "true" to the setTextColor() function fills character background
+    // This extra parameter is only for smooth fonts!
+    tft.setTextColor(TFT_GREEN, TFT_BLACK, true);
+    tft.setCursor(50, 90);
+    tft.print(i / 10.0, 1);
+    
+    delay (50);
+  }
+
+  delay(2000);
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Large font text wrapping
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  tft.fillScreen(TFT_BLACK);
+  
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK); // Change the font colour and the background colour
+
+  tft.setCursor(0, 0); // Set cursor at top left of screen
+
+  tft.println("Large font!");
+
+  tft.setTextWrap(true); // Wrap on width
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.println("Long lines wrap to the next line");
+
+  tft.setTextWrap(false, false); // Wrap on width and height switched off
+  tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+  tft.println("Unless text wrap is switched off");
+
+  tft.unloadFont(); // Remove the font to recover memory used
+
+  delay(2000);
+}
+
+void loop_smooth_font_demo_2() {
+
+  tft.fillScreen(TFT_BLACK);
+
+  tft.setTextColor(TFT_WHITE, TFT_BLACK); // Set the font colour and the background colour
+
+  tft.setTextDatum(TC_DATUM); // Top Centre datum
+
+  int xpos = tft.width() / 2; // Half the screen width
+  int ypos = 10;
+
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Small font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  tft.loadFont(AA_FONT_SMALL); // Must load the font first
+
+  tft.drawString("Small 15pt font (demo_2)", xpos, ypos);
+
+  ypos += tft.fontHeight();   // Get the font height and move ypos down
+
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+
+  // If the string does not fit the screen width, then the next character will wrap to a new line
+  tft.drawString("Ode To A Small Lump Of Green Putty I Found In My Armpit One Midsummer Morning", xpos, ypos);
+
+  tft.setTextColor(TFT_GREEN, TFT_BLUE); // Background colour does not match the screen background!
+  tft.drawString("Anti-aliasing causes odd looking shadow effects if the text and screen background colours are not the same!", xpos, ypos + 60);
+
+  tft.unloadFont(); // Remove the font to recover memory used
+
+  delay(2000);
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Large font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  tft.loadFont(AA_FONT_LARGE); // Load another different font
+
+  tft.fillScreen(TFT_BLACK);
+
+  // The "true" parameter forces background drawing for smooth fonts
+  tft.setTextColor(TFT_GREEN, TFT_BLUE, true); // Change the font colour and the background colour
+
+  tft.drawString("36pt font", xpos, ypos);
+
+  ypos += tft.fontHeight();  // Get the font height and move ypos down
+
+  // Set text padding to 100 pixels wide area to over-write old values on screen
+  tft.setTextPadding(100);
+
+  // Draw changing numbers - likely to flicker using this plot method!
+  for (int i = 0; i <= 99; i++) {
+    tft.drawFloat(i / 10.0, 1, xpos, ypos);
+    delay (50);
+  }
+
+  // Turn off text padding by setting value to 0
+  tft.setTextPadding(0);
+
+  tft.unloadFont(); // Remove the font to recover memory used
+
+  delay(2000);
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Setting the 12 datum positions works with free fonts
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  // Integer numbers, floats and strings can be drawn relative to a x,y datum, e.g.:
+  // tft.drawNumber( 123, x, y);
+  // tft.drawFloat( 1.23, dp, x, y); // Where dp is number of decimal places to show
+  // tft.drawString( "Abc", x, y);
+
+  tft.fillScreen(TFT_BLACK);
+
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK, false);
+
+  // Use middle of screen as datum
+  xpos = tft.width() /2;
+  ypos = tft.height()/2;
+
+  tft.loadFont(AA_FONT_SMALL);
+  tft.setTextDatum(TL_DATUM);
+  tft.drawString("[Top left]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(TC_DATUM);
+  tft.drawString("[Top centre]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(TR_DATUM);
+  tft.drawString("[Top right]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(ML_DATUM);
+  tft.drawString("[Middle left]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("[Middle centre]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MR_DATUM);
+  tft.drawString("[Middle right]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(BL_DATUM);
+  tft.drawString("[Bottom left]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(BC_DATUM);
+  tft.drawString("[Bottom centre]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(BR_DATUM);
+  tft.drawString("[Bottom right]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(L_BASELINE);
+  tft.drawString("[Left baseline]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(C_BASELINE);
+  tft.drawString("[Centre baseline]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(R_BASELINE);
+  tft.drawString("[Right baseline]", xpos, ypos);
+  drawDatumMarker(xpos, ypos);
+  delay(500);
+
+  tft.unloadFont(); // Remove the font to recover memory used
+
+  delay(2000);
+}
+
+void loop_smooth_font_demo_3() {
+
+  tft.fillScreen(TFT_DARKGREY);
+
+  int xpos = tft.width() / 2; // Half the screen width
+  int ypos = 50;
+
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Small font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  spr.loadFont(AA_FONT_SMALL); // Must load the font first into the sprite class
+
+  spr.createSprite(100, 50);   // Create a sprite 100 pixels wide and 50 high
+
+  spr.fillSprite(TFT_BLUE);
+
+  spr.drawRect(0, 0, 100, 50, TFT_WHITE); // Draw sprite border outline (so we see extent)
+
+  spr.setTextColor(TFT_YELLOW, TFT_DARKGREY); // Set the sprite font colour and the background colour
+
+  spr.setTextDatum(MC_DATUM); // Middle Centre datum
+  
+  spr.drawString("15pt font (d_3)", 50, 25 ); // Coords of middle of 100 x 50 Sprite
+
+  spr.pushSprite(10, 10); // Push to TFT screen coord 10, 10
+
+  spr.pushSprite(10, 70, TFT_BLUE); // Push to TFT screen, TFT_BLUE is transparent
+ 
+  spr.unloadFont(); // Remove the font from sprite class to recover memory used
+
+  delay(4000);
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Large font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  tft.fillScreen(TFT_BLACK);
+
+  // Beware: Sprites are a differerent "class" to TFT, so different fonts can be loaded
+  // in the tft and sprite instances, so load the font in the class instance you use!
+  // In this example this means the spr. instance.
+
+  spr.loadFont(AA_FONT_LARGE); // Load another different font into the sprite instance
+
+  // 100 x 50 sprite was created above and still exists...
+
+  spr.fillSprite(TFT_GREEN);
+
+  spr.setTextColor(TFT_BLACK, TFT_GREEN); // Set the font colour and the background colour
+
+  spr.setTextDatum(MC_DATUM); // Middle Centre datum
+
+  spr.drawString("Fits", 50, 25); // Make sure text fits in the Sprite!
+  spr.pushSprite(10, 10);         // Push to TFT screen coord 10, 10
+
+  spr.fillSprite(TFT_RED);
+  spr.setTextColor(TFT_WHITE, TFT_RED); // Set the font colour and the background colour
+
+//  spr.drawString("Too big", 50, 25); // Text is too big to all fit in the Sprite!
+//  spr.pushSprite(10, 70);            // Push to TFT screen coord 10, 70
+
+  // Draw changing numbers - no flicker using this plot method!
+
+  // >>>> Note: it is best to use drawNumber() and drawFloat() for numeric values <<<<
+  // >>>> this reduces digit position movement when the value changes             <<<<
+  // >>>> drawNumber() and drawFloat() functions behave like drawString() and are <<<<
+  // >>>> supported by setTextDatum() and setTextPadding()                        <<<<
+
+  spr.setTextDatum(TC_DATUM); // Top Centre datum
+
+  spr.setTextColor(TFT_WHITE, TFT_BLUE); // Set the font colour and the background colour
+
+  for (int i = 0; i <= 200; i++) {
+    spr.fillSprite(TFT_BLUE);
+    spr.drawFloat(i / 100.0, 2, 50, 10); // draw with 2 decimal places at 50,10 in sprite
+    spr.pushSprite(10, 70); // Push to TFT screen coord 10, 130
+    delay (20);
+  }
+
+  spr.unloadFont(); // Remove the font to recover memory used
+
+  spr.deleteSprite(); // Recover memory
+  
+  delay(1000);
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Mono spaced font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  
+  spr.loadFont(AA_FONT_MONO); // Mono spaced fonts have fixed inter-character gaps to
+                              // aid formatting
+  int bnum = 1;
+
+  // Example of drawing buttons
+  for (int j = 0; j < 4; j++)
+  {
+    for (int k = 0; k < 4; k++)
+    {
+      int x = 80 + k * 45;
+      int y = 20  + j * 30;
+      button(x, y, bnum++);
+    }
+  }
+
+  for (int i = 0; i < 100; i++)
+  {
+    button(10, 10, i);
+    delay(50);
+  }
+  
+  spr.unloadFont();
+
+  delay(2000);
+}
+
+// #########################################################################
+// Draw a number in a rounded rectangle with some transparent pixels
+// Load the font before calling
+// #########################################################################
+void button(int x, int y, int num )
+{
+
+  // Size of sprite
+  #define IWIDTH  40
+  #define IHEIGHT 25
+
+  // Create a 16 bit sprite 40 pixels wide, 25 high (2000 bytes of RAM needed)
+  spr.setColorDepth(16);
+  spr.createSprite(IWIDTH, IHEIGHT);
+
+  // Fill it with black (this will be the transparent colour this time)
+  spr.fillSprite(TFT_BLACK);
+
+  // Draw a background for the numbers
+  spr.fillRoundRect(  0, 0,  IWIDTH, IHEIGHT, 8, TFT_RED);
+  spr.drawRoundRect(  0, 0,  IWIDTH, IHEIGHT, 8, TFT_WHITE);
+
+  // Set the font parameters
+
+  // Set text coordinate datum to middle centre
+  spr.setTextDatum(MC_DATUM);
+
+  // Set the font colour and the background colour
+  spr.setTextColor(TFT_WHITE, TFT_RED);
+
+  // Draw the number
+  spr.drawNumber(num, IWIDTH/2, 1 + IHEIGHT/2);
+
+  // Push sprite to TFT screen CGRAM at coordinate x,y (top left corner)
+  // All black pixels will not be drawn hence will show as "transparent"
+  spr.pushSprite(x, y, TFT_BLACK);
+
+  // Delete sprite to free up the RAM
+  spr.deleteSprite();
+}
+
+void loop_smooth_font_demo_4() {
+  tft.fillScreen(TFT_BLACK);
+
+  tft.setTextColor(TFT_WHITE, TFT_BLACK); // Set the font colour and the background colour
+
+  tft.setTextDatum(TC_DATUM); // Top Centre datum
+
+  int xpos = tft.width() / 2; // Half the screen width
+  int ypos = 50;
+
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Small font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  spr.loadFont(AA_FONT_SMALL); // Must load the font first into the sprite class
+  
+  spr.setTextColor(TFT_YELLOW, TFT_BLACK); // Set the sprite font colour and the background colour
+
+  tft.setCursor(xpos - 80, ypos);          // Set the tft cursor position, yes tft position!
+  spr.printToSprite("Small 15pt font (demo_4)");    // Prints to tft cursor position, tft cursor NOT moved
+
+  ypos += spr.fontHeight();   // Get the font height and move ypos down
+
+  spr.unloadFont(); // Remove the font from sprite class to recover memory used
+
+  delay(4000);
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Large font
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  tft.fillScreen(TFT_BLACK);
+
+  spr.loadFont(AA_FONT_LARGE); // Load another different font
+
+  spr.setTextColor(TFT_WHITE, TFT_BLUE); // Set the font colour and the background colour
+
+  tft.setCursor(xpos - 90, ypos);  // Set the tft cursor position
+  spr.printToSprite("36pt font");  // Text is rendered via a minimally sized sprite
+
+  ypos += spr.fontHeight();  // Get the font height and move ypos down
+
+  // Draw changing numbers - no flicker using this plot method!
+  for (int i = 0; i <= 200; i++) {
+    tft.setCursor(10, 10);
+    // Number is converted to String type by (String) (number)
+    spr.printToSprite(" " + (String) (i / 100.0) + " "); // Space padding helps over-write old numbers
+    delay (20);
+  }
+
+  spr.unloadFont(); // Remove the font to recover memory used
+
+  delay(2000);
+}
+
+void unicode_font_test()
+{
+  tft.setTextColor(fg, bg);
+
+  //----------------------------------------------------------------------------
+  // Anti-aliased font test
+
+  String test1 = "Hello World";
+
+  // Load a smooth font from SPIFFS
+  tft.loadFont(Final_Frontier_28);
+
+  tft.setRotation(0);
+
+  // Show all characters on screen with 2 second (2000ms) delay between screens
+  tft.showFont(2000); // Note: This function moves the cursor position!
+
+  tft.fillScreen(bg);
+  tft.setCursor(0,0);
+
+  tft.println(test1);
+
+  // Remove font parameters from memory to recover RAM
+  tft.unloadFont();
+
+  delay(2000);
+
+  //----------------------------------------------------------------------------
+  // We can have any random mix of characters in the font
+
+  String test2 = "仝倀"; // Unicodes 0x4EDD, 0x5000
+
+  tft.loadFont(Unicode_Test_72);
+
+  tft.setRotation(1);
+
+  // Show all characters on screen with 2 second (2000ms) delay between screens
+  tft.showFont(2000); // Note: This function moves the cursor position!
+
+  tft.fillScreen(bg);
+  tft.setCursor(0,0);
+
+  tft.setTextColor(TFT_CYAN, bg);
+  tft.println(test2);
+
+  tft.setTextColor(TFT_YELLOW, bg);
+  tft.println("12:00pm");
+
+  tft.setTextColor(TFT_MAGENTA, bg);
+  tft.println("1000Ω");
+
+  // Remove font parameters from memory to recover RAM
+  tft.unloadFont();
+
+  delay(2000);
+
+  //----------------------------------------------------------------------------
+  // Latin and Hiragana font mix
+
+  String test3 = "こんにちは";
+    
+  tft.loadFont(Latin_Hiragana_24);
+
+  tft.setRotation(0);
+  
+  // Show all characters on screen with 2 second (2000ms) delay between screens
+  tft.showFont(2000); // Note: This function moves the cursor position!
+
+  tft.fillScreen(bg);
+  tft.setTextColor(TFT_GREEN, bg);
+  tft.setCursor(0,0);
+
+  tft.println("Konnichiwa");
+  tft.println(test3);
+  tft.println();
+  tft.println("Sayonara");
+  tft.println("さようなら"); // Sayonara
+
+  // Remove font parameters from memory to recover RAM
+  tft.unloadFont();
+
+  delay(2000);
+  //
+  //----------------------------------------------------------------------------
+}
 
 
 void loop_fast_fonts() 

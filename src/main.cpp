@@ -19,12 +19,15 @@
 #define CF_S24  &Satisfy_24
 #define CF_Y32  &Yellowtail_32
 
+unsigned long drawTime = 0;
+
 void header(const char *string, uint16_t color);
 void drawDatumMarker(int x, int y);
 
 void loop_all_free_fonts_demo(); 
 void loop_free_font_demo();
 void loop_custom_fonts();
+void loop_fast_fonts();
 
 TFT_eSPI& tft=M5.Lcd;
 
@@ -38,10 +41,122 @@ void loop()
 {
 //  loop_all_free_fonts_demo(); 
 //  loop_free_font_demo();
-  loop_custom_fonts();
+//  loop_custom_fonts();
+    loop_fast_fonts();
 }
 //  -D TFT_WIDTH=135
 //  -D TFT_HEIGHT=240
+
+
+void loop_fast_fonts() 
+{
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  int ypos = 105;
+  int xposNum = 5;
+  int yposNum = 5;
+  drawTime = millis();
+
+  for (int i = 0; i < 1000; i++) {
+    yield();tft.drawNumber(i, xposNum, yposNum, 1);
+  }
+
+  drawTime = millis() - drawTime;
+
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  int xpos = 20;
+  xpos += tft.drawFloat(drawTime / 2890.0, 3, xpos, ypos, 4);
+  tft.drawString(" ms per char", xpos, ypos, 4);
+  if (drawTime < 100) tft.drawString("Font 1 not loaded!", 50, 210, 4);
+  
+  delay(4000);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    drawTime = millis();
+
+  for (int i = 0; i < 1000; i++) {
+    yield();tft.drawNumber(i, xposNum, yposNum, 2);
+  }
+
+  drawTime = millis() - drawTime;
+
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  xpos = 20;
+  xpos += tft.drawFloat(drawTime / 2890.0, 3, xpos, ypos, 4);
+  tft.drawString(" ms per char", xpos, ypos, 4);
+  if (drawTime < 200) tft.drawString("Font 2 not loaded!", 50, 210, 4);
+  
+  delay(4000);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    drawTime = millis();
+
+  for (int i = 0; i < 1000; i++) {
+    yield();tft.drawNumber(i, xposNum, yposNum, 4);
+  }
+
+  drawTime = millis() - drawTime;
+
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  xpos = 20;
+  xpos += tft.drawFloat(drawTime / 2890.0, 3, xpos, ypos, 4);
+  tft.drawString(" ms per char", xpos, ypos, 4);
+  if (drawTime < 200) tft.drawString("Font 4 not loaded!", 50, 210, 4);
+  
+  delay(4000);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    drawTime = millis();
+
+  for (int i = 0; i < 1000; i++) {
+    yield();tft.drawNumber(i, xposNum, yposNum, 6);
+  }
+
+  drawTime = millis() - drawTime;
+
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  xpos = 20;
+  xpos += tft.drawFloat(drawTime / 2890.0, 3, xpos, ypos, 4);
+  tft.drawString(" ms per char", xpos, ypos, 4);
+  if (drawTime < 200) tft.drawString("Font 6 not loaded!", 50, 210, 4);
+  
+  delay(4000);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    drawTime = millis();
+
+  for (int i = 0; i < 1000; i++) {
+    yield();tft.drawNumber(i, xposNum, yposNum, 7);
+  }
+
+  drawTime = millis() - drawTime;
+
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  xpos = 20;
+  xpos += tft.drawFloat(drawTime / 2890.0, 3, xpos, ypos, 4);
+  tft.drawString(" ms per char", xpos, ypos, 4);
+  if (drawTime < 200) tft.drawString("Font 7 not loaded!", 50, 210, 4);
+  
+  delay(4000);
+  tft.fillScreen(TFT_YELLOW);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    drawTime = millis();
+
+  for (int i = 0; i < 1000; i++) {
+    yield();tft.drawNumber(i, xposNum, yposNum, 8);
+  }
+
+  drawTime = millis() - drawTime;
+
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  xpos = 20;
+  xpos += tft.drawFloat(drawTime / 2890.0, 3, xpos, ypos, 4);
+  tft.drawString(" ms per char", xpos, ypos, 4);
+  if (drawTime < 200) tft.drawString("Font 8 not loaded!", 50, 210, 4);
+  
+  delay(4000);
+}
 
 void loop_custom_fonts() 
 {
